@@ -1,17 +1,18 @@
-# Start from a lightweight OpenJDK base image
 FROM openjdk:25-jdk-slim
 
-# Environment variable for port (Render will provide this)
+# Render injects PORT dynamically, default to 10000
 ENV PORT=10000
+ENV TRUSTSTORE_PASSWORD=changeit
 
-# Set working directory inside the container
 WORKDIR /app
 
-# Copy the JAR file built by Maven into the container
+# Copy app JAR
 COPY target/*.jar app.jar
 
-# Expose the port
+# Copy the truststore (created from ca.pem)
+COPY src/main/resources/aiven-truststore.jks aiven-truststore.jks
+
 EXPOSE ${PORT}
 
-# Command to run the app
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Run app with truststore configured
+ENTRYPOINT ["java", "-Djavax.net.ssl.trustStore=/app/aiven-truststore.jks", "-Djavax.net.ssl.trustStorePassword=changeit", "-Djavax.net.ssl.trustStoreType=JKS", "-jar", "app.jar"]
